@@ -6,6 +6,7 @@ import mainend.apps
 
 rdf = mainend.apps.rdf_start
 
+
 @csrf_exempt
 def index(request):
     if request.method == 'POST':
@@ -36,7 +37,7 @@ def index(request):
             res = rdf.query_rdf(query)
             for row in res:
                 res_anime_title.append(row.animeTitle)
-            
-        return JsonResponse({"status": "success", "result":res_anime_title}, status=200)
+
+        return JsonResponse({"status": "success", "result": res_anime_title, }, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
