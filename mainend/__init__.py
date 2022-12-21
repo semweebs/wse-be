@@ -1,1 +1,1 @@
-default_app_config = 'mainend.apps.MainendConfig'
+# default_app_config = 'mainend.apps.MainendConfig'
