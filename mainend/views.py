@@ -358,3 +358,260 @@ def anime_studio(request):
         return JsonResponse({"status": "success", "result": res_anime['results']['bindings']}, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
+
+@csrf_exempt
+def advance_search(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        genre = data['genre']
+        themes = data['themes']
+        demo = data['demo']
+        tipe = data['type']
+        score = data['score']
+        start_year = data['start_year']
+        start_season = data['start_season']
+        status = data['status']
+        sorting_score = data['sort_score']
+        res_anime = []
+        query = """
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?animeId ?main_picture ?animeTitle WHERE{
+                ?animeId rdf:type ex:anime;
+                """
+        if len(genre)!=0:
+            query +=(f'''   x:genres  ''')
+            counter = 0
+            for x in genre:
+                counter+=1
+                if(counter == len(genre)):
+                    query+=(f'''ex:{x}''')
+                else:
+                    query+=(f'''ex:{x}, ''')
+        if len(themes)!=0:
+            query +=(f''';
+                    x:themes  ''')
+            counter = 0
+            for x in themes:
+                counter+=1
+                if(counter == len(themes)):
+                    query+=(f'''ex:{x}''')
+                else:
+                    query+=(f'''ex:{x}, ''')
+        if len(demo)!=0:
+            query +=(f''';
+                    x:demographics  ''')
+            counter = 0
+            for x in demo:
+                counter+=1
+                if(counter == len(demo)):
+                    query+=(f'''ex:{x}''')
+                else:
+                    query+=(f'''ex:{x}, ''')
+
+        if len(tipe)!=0:
+            query +=(f''';
+                    x:type  ''')
+            counter = 0
+            for x in tipe:
+                counter+=1
+                if(counter == len(tipe)):
+                    query+=(f'''ex:{x}''')
+                else:
+                    query+=(f'''ex:{x}, ''')
+
+        if (start_year!=''):
+            query +=(f''';
+                    x:start_year ex:{start_year}''')
+        if (status!=''):
+            query +=(f''';
+                    x:status ex:{status} ''')
+        if (start_season!=''):
+            query +=(f''';
+                    x:start_season ex:{start_season}''')
+        query +=''';
+                    x:score ?score'''
+        query+=''';
+                    x:title ?animeTitle.
+        '''
+        if(score!=''):
+            query+=(f'''
+                filter (?score >= "{score}"^^xsd:double)
+            ''')
+        if(sorting_score == 'asc'):
+            query+=('''
+                }order by ?score
+            '''
+            )
+        elif(sorting_score == 'desc'):
+            query+=('''
+                }order by desc (?score)
+            '''
+            )
+        else:
+            query+='''
+            }
+            '''
+        print(query)
+        sparql.setQuery(query)
+        res_anime = sparql.queryAndConvert()
+        print(res_anime)
+        return JsonResponse({"status": "success", "result": res_anime['results']['bindings']}, status=200)
+    else:
+        return JsonResponse({"status": "error"}, status=401)
+
+@csrf_exempt
+def advance_data(request):
+    if request.method == 'GET':
+        genre =[]
+        query = ("""
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?genreId (SAMPLE(?genreLabel) AS ?genreName) WHERE{{
+                ?genreId rdf:type ex:genre;
+                        rdfs:label ?genreLabel.
+            }}group by ?genreId
+        """)
+        sparql.setQuery(query)
+        genre = sparql.queryAndConvert()
+
+        theme = []
+        query = ("""
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?themeId (SAMPLE(?themeLabel) AS ?themeName) WHERE{{
+                ?themeId rdf:type ex:theme;
+                        rdfs:label ?themeLabel.
+            }}group by ?themeId
+        """)
+        sparql.setQuery(query)
+        theme = sparql.queryAndConvert()
+
+        demo = []
+        query = ("""
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?demographicId (SAMPLE(?demographicLabel) AS ?demographicName) WHERE{{
+                ?demographicId rdf:type ex:demographic;
+                        rdfs:label ?demographicLabel.
+            }}group by ?demographicId
+        """)
+        sparql.setQuery(query)
+        demo = sparql.queryAndConvert()
+
+        tipe = []
+        query = ("""
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?typeId (SAMPLE(?typeLabel) AS ?typeName) WHERE{{
+                ?typeId rdf:type ex:type;
+                        rdfs:label ?typeLabel.
+            }}group by ?typeId
+        """)
+        sparql.setQuery(query)
+        tipe = sparql.queryAndConvert()
+
+        start_year = []
+        query = ("""
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?start_yearId (SAMPLE(?start_yearLabel) AS ?start_yearName) WHERE{{
+                ?start_yearId rdf:type ex:start_year;
+                        rdfs:label ?start_yearLabel.
+            }}group by ?start_yearId
+        """)
+        sparql.setQuery(query)
+        start_year = sparql.queryAndConvert()
+
+        start_season = []
+        query = ("""
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?start_seasonId (SAMPLE(?start_seasonLabel) AS ?start_seasonName) WHERE{{
+                ?start_seasonId rdf:type ex:start_season;
+                        rdfs:label ?start_seasonLabel.
+            }}group by ?start_seasonId
+        """)
+        sparql.setQuery(query)
+        start_season = sparql.queryAndConvert()
+
+        status = []
+        query = ("""
+            prefix :      <http://127.0.0.1:3333/>
+            prefix ex:    <http://example.org/data/>
+            prefix owl:   <http://www.w3.org/2002/07/owl#>
+            prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+            prefix vcard: <http://www.w3.org/2006/vcard/ns#>
+            prefix x:     <http://example.org/vocab#>
+            prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+            prefix bds:   <http://www.bigdata.com/rdf/search#>
+
+            SELECT DISTINCT ?statusId (SAMPLE(?statusLabel) AS ?statusName) WHERE{{
+                ?statusId rdf:type ex:status;
+                        rdfs:label ?statusLabel.
+            }}group by ?statusId
+        """)
+        sparql.setQuery(query)
+        start_season = sparql.queryAndConvert()
+        return JsonResponse({"status": "success", "genre": genre['results']['bindings']
+                            , ""
+                            }, status=200)
+    else:
+        return JsonResponse({"status": "error"}, status=401)
