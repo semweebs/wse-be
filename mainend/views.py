@@ -422,8 +422,7 @@ def advance_search(request):
             prefix bds:   <http://www.bigdata.com/rdf/search#>
 
             SELECT DISTINCT ?animeId ?main_picture ?animeTitle WHERE{
-                ?animeId rdf:type ex:anime
-                """
+                ?animeId rdf:type ex:anime"""
         if len(genre)!=0:
             query +=(f''';
                    x:genres  ''')
