@@ -29,7 +29,7 @@ def index(request):
                 prefix bds:   <http://www.bigdata.com/rdf/search#>
 
                 SELECT DISTINCT ?animeId ?main_picture ?animeTitle WHERE{
-                    ?animeId rdf:type ex:anime;
+                    {?animeId rdf:type ex:anime;
                         x:title ?animeTitle. 
                         """
             query += '?animeTitle bds:search "*'+title+'*" .'
@@ -37,9 +37,24 @@ def index(request):
                     optional{
                         ?animeId x:main_picture ?main_picture.
                     }
+                    OPTIONAL {
+                        ?animeId x:title_english ?title_en ;
+                    }
+                    }
+                    UNION
+                    {
+                    OPTIONAL {
+                        FILTER (strlen(?title_en) > 0)
+                        BIND(".#." AS ?title_en)
+                    }
+                    """
+            query += '?title_en bds:search "*'+title+'*" .'
+            query += """
                 }
-                ORDER BY ?animeTitle
-            """
+            }
+            ORDER BY ?animeTitle
+        """
+            print(query)
             sparql.setQuery(query)
             res_anime_title = sparql.queryAndConvert()
 
@@ -328,6 +343,7 @@ def detail(request):
     else:
         return JsonResponse({"status": "error"}, status=401)
 
+
 @csrf_exempt
 def studio(request):
     if request.method == 'POST':
@@ -360,6 +376,7 @@ def studio(request):
         return JsonResponse({"status": "success", "result": res_studio['results']['bindings']}, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
+
 
 @csrf_exempt
 def anime_studio(request):
@@ -396,6 +413,7 @@ def anime_studio(request):
     else:
         return JsonResponse({"status": "error"}, status=401)
 
+
 @csrf_exempt
 def advance_search(request):
     if request.method == 'POST':
@@ -423,72 +441,72 @@ def advance_search(request):
 
             SELECT DISTINCT ?animeId ?main_picture ?animeTitle WHERE{
                 ?animeId rdf:type ex:anime"""
-        if len(genre)!=0:
-            query +=(f''';
+        if len(genre) != 0:
+            query += (f''';
                    x:genres  ''')
             counter = 0
             for x in genre:
-                counter+=1
-                if(counter == len(genre)):
-                    query+=(f'''ex:{x}''')
+                counter += 1
+                if (counter == len(genre)):
+                    query += (f'''ex:{x}''')
                 else:
-                    query+=(f'''ex:{x}, ''')
-        if len(themes)!=0:
-            query +=(f''';
+                    query += (f'''ex:{x}, ''')
+        if len(themes) != 0:
+            query += (f''';
                     x:themes  ''')
             counter = 0
             for x in themes:
-                counter+=1
-                if(counter == len(themes)):
-                    query+=(f'''ex:{x}''')
+                counter += 1
+                if (counter == len(themes)):
+                    query += (f'''ex:{x}''')
                 else:
-                    query+=(f'''ex:{x}, ''')
-        if len(demo)!=0:
-            query +=(f''';
+                    query += (f'''ex:{x}, ''')
+        if len(demo) != 0:
+            query += (f''';
                     x:demographics  ''')
             counter = 0
             for x in demo:
-                counter+=1
-                if(counter == len(demo)):
-                    query+=(f'''ex:{x}''')
+                counter += 1
+                if (counter == len(demo)):
+                    query += (f'''ex:{x}''')
                 else:
-                    query+=(f'''ex:{x}, ''')
-        if (tipe!=''):
-            query +=(f''';
+                    query += (f'''ex:{x}, ''')
+        if (tipe != ''):
+            query += (f''';
                     x:type ex:{tipe}''')
-        if (start_year!=''):
-            query +=(f''';
+        if (start_year != ''):
+            query += (f''';
                     x:start_year ex:{start_year}.0''')
-        if (status!=''):
-            query +=(f''';
+        if (status != ''):
+            query += (f''';
                     x:status ex:{status} ''')
-        if (start_season!=''):
-            query +=(f''';
+        if (start_season != ''):
+            query += (f''';
                     x:start_season ex:{start_season}''')
-        query +=''';
+        query += ''';
                     x:score ?score'''
-        query+=''';
+        query += ''';
                     x:title ?animeTitle.
                 optional{
                     ?animeId x:main_picture ?main_picture.
                 }
         '''
-        if(score!=''):
-            query+=(f'''
+        if (score != ''):
+            query += (f'''
                 filter (?score >= "{score}"^^xsd:double)
             ''')
-        if(sorting_score == 'asc'):
-            query+=('''
+        if (sorting_score == 'asc'):
+            query += ('''
                 }order by ?score
             '''
-            )
-        elif(sorting_score == 'desc'):
-            query+=('''
+                      )
+        elif (sorting_score == 'desc'):
+            query += ('''
                 }order by desc (?score)
             '''
-            )
+                      )
         else:
-            query+='''
+            query += '''
             }
             '''
         print(query)
@@ -499,10 +517,11 @@ def advance_search(request):
     else:
         return JsonResponse({"status": "error"}, status=401)
 
+
 @csrf_exempt
 def advance_data(request):
     if request.method == 'GET':
-        genre =[]
+        genre = []
         query = ("""
             prefix :      <http://127.0.0.1:3333/>
             prefix ex:    <http://example.org/data/>
@@ -641,13 +660,7 @@ def advance_data(request):
         """)
         sparql.setQuery(query)
         status = sparql.queryAndConvert()
-        return JsonResponse({"status": "success", "genre": genre['results']['bindings']
-                            ,"theme": theme['results']['bindings']
-                            ,"demo": demo['results']['bindings']
-                            ,"tipe": tipe['results']['bindings']
-                            ,"start_year": start_year['results']['bindings']
-                            ,"start_season": start_season['results']['bindings']
-                            ,"status": status['results']['bindings']
-                            }, status=200)
+        return JsonResponse({"status": "success", "genre": genre['results']['bindings'], "theme": theme['results']['bindings'], "demo": demo['results']['bindings'], "tipe": tipe['results']['bindings'], "start_year": start_year['results']['bindings'], "start_season": start_season['results']['bindings'], "status": status['results']['bindings']
+                             }, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
