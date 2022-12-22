@@ -581,7 +581,7 @@ def advance_data(request):
             prefix bds:   <http://www.bigdata.com/rdf/search#>
 
             SELECT DISTINCT ?typeId (SAMPLE(?typeLabel) AS ?typeName) WHERE{{
-                ?typeId rdf:type ex:type;
+                ?typeId rdf:type ex:tipe;
                         rdfs:label ?typeLabel.
             }}group by ?typeId
         """)
