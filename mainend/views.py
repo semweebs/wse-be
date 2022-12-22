@@ -281,9 +281,46 @@ def detail(request):
                 ?title_english
                 ?title_japanese
             '''
-        sparql.setQuery(query)
-        res_anime = sparql.queryAndConvert()
-        return JsonResponse({"status": "success", "result": res_anime['results']['bindings'], }, status=200)
+            sparql.setQuery(query)
+            res_anime = sparql.queryAndConvert()
+            res_character = []
+            query = ("""
+                        prefix wd: <http://www.wikidata.org/entity/>
+                        prefix wds: <http://www.wikidata.org/entity/statement/>
+                        prefix wdv: <http://www.wikidata.org/value/>
+                        prefix wdt: <http://www.wikidata.org/prop/direct/>
+                        prefix wikibase: <http://wikiba.se/ontology#>
+                        prefix p: <http://www.wikidata.org/prop/>
+                        prefix ps: <http://www.wikidata.org/prop/statement/>
+                        prefix pq: <http://www.wikidata.org/prop/qualifier/>
+                        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                        prefix bd: <http://www.bigdata.com/rdf#>
+                        SELECT ?charactersLabel (GROUP_CONCAT(?actorLabel;SEPARATOR=", ") AS ?actorsLabel) ?genderLabel WHERE {
+                            {
+                            SELECT DISTINCT ?charactersLabel ?actorLabel ?genderLabel WHERE {
+                                SERVICE wikibase:label { 
+                                    bd:serviceParam wikibase:language "[AUTO_LANGUAGE]". }
+                                    {
+                                    SELECT DISTINCT ?item WHERE {
+                                        ?item p:P4086 ?statement0.
+                                        ?statement0 ps:P4086 "1".
+                                    }
+                                    LIMIT 100
+                                }
+                                OPTIONAL 
+                                { 
+                                    ?item wdt:P674 ?characters. 
+                                    ?characters wdt:P725 ?actor.
+                                    ?characters wdt:P21 ?gender.
+                                }
+                            }
+                            }
+                        } 
+                        GROUP BY ?charactersLabel ?genderLabel
+                        """)
+            sparql.setQuery(query)
+            res_character = sparql.queryAndConvert()
+        return JsonResponse({"status": "success", "result": res_anime['results']['bindings'], "character": res_character['results']['bindings']}, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
 
@@ -316,7 +353,6 @@ def studio(request):
             sparql.setQuery(query)
             print(query)
             res_studio = sparql.queryAndConvert()
-
         return JsonResponse({"status": "success", "result": res_studio['results']['bindings']}, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
@@ -562,7 +598,7 @@ def advance_data(request):
 
             SELECT DISTINCT ?start_yearId (SAMPLE(?start_yearLabel) AS ?start_yearName) WHERE{{
                 ?start_yearId rdf:type ex:start_year;
-                        rdfs:label ?start_yearLabel.
+                        rdf:value ?start_yearLabel.
             }}group by ?start_yearId
         """)
         sparql.setQuery(query)
