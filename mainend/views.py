@@ -453,18 +453,9 @@ def advance_search(request):
                     query+=(f'''ex:{x}''')
                 else:
                     query+=(f'''ex:{x}, ''')
-
-        if len(tipe)!=0:
+        if (tipe!=''):
             query +=(f''';
-                    x:type  ''')
-            counter = 0
-            for x in tipe:
-                counter+=1
-                if(counter == len(tipe)):
-                    query+=(f'''ex:{x}''')
-                else:
-                    query+=(f'''ex:{x}, ''')
-
+                    x:type ex:{tipe}''')
         if (start_year!=''):
             query +=(f''';
                     x:start_year ex:{start_year}''')
