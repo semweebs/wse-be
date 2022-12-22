@@ -459,7 +459,7 @@ def advance_search(request):
                     x:type ex:{tipe}''')
         if (start_year!=''):
             query +=(f''';
-                    x:start_year ex:{start_year}''')
+                    x:start_year ex:{start_year}.0''')
         if (status!=''):
             query +=(f''';
                     x:status ex:{status} ''')
