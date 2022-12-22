@@ -470,6 +470,9 @@ def advance_search(request):
                     x:score ?score'''
         query+=''';
                     x:title ?animeTitle.
+                optional{
+                    ?animeId x:main_picture ?main_picture.
+                }
         '''
         if(score!=''):
             query+=(f'''
