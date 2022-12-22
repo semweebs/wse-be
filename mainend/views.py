@@ -281,12 +281,9 @@ def detail(request):
                 ?title_english
                 ?title_japanese
             '''
-            try:
-                sparql.setQuery(query)
-                res_anime = sparql.queryAndConvert()
-                return JsonResponse({"status": "success", "result": res_anime['results']['bindings'], }, status=200)
-            except Exception as e:
-                return JsonResponse({"status": "error","message":e}, status=401)
+        sparql.setQuery(query)
+        res_anime = sparql.queryAndConvert()
+        return JsonResponse({"status": "success", "result": res_anime['results']['bindings'], }, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
 
@@ -609,9 +606,14 @@ def advance_data(request):
             }}group by ?statusId
         """)
         sparql.setQuery(query)
-        start_season = sparql.queryAndConvert()
+        status = sparql.queryAndConvert()
         return JsonResponse({"status": "success", "genre": genre['results']['bindings']
-                            , ""
+                            ,"theme": theme['results']['bindings']
+                            ,"demo": demo['results']['bindings']
+                            ,"tipe": tipe['results']['bindings']
+                            ,"start_year": start_year['results']['bindings']
+                            ,"start_season": start_season['results']['bindings']
+                            ,"status": status['results']['bindings']
                             }, status=200)
     else:
         return JsonResponse({"status": "error"}, status=401)
