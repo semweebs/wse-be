@@ -143,7 +143,7 @@ def detail(request):
                     '''
             query += anime_id
             query += ''' x:rating ?ratings.
-                    ?ratings rdf:value ?rating.
+                    ?ratings rdfs:label ?rating.
                 } .                      
                 OPTIONAL {
                     '''
@@ -284,7 +284,8 @@ def detail(request):
             sparql.setQuery(query)
             res_anime = sparql.queryAndConvert()
             res_character = []
-            query = ("""
+            id = anime_id.split(":")
+            query = (f"""
                         prefix wd: <http://www.wikidata.org/entity/>
                         prefix wds: <http://www.wikidata.org/entity/statement/>
                         prefix wdv: <http://www.wikidata.org/value/>
@@ -295,28 +296,31 @@ def detail(request):
                         prefix pq: <http://www.wikidata.org/prop/qualifier/>
                         prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                         prefix bd: <http://www.bigdata.com/rdf#>
-                        SELECT ?charactersLabel (GROUP_CONCAT(?actorLabel;SEPARATOR=", ") AS ?actorsLabel) ?genderLabel WHERE {
-                            {
-                            SELECT DISTINCT ?charactersLabel ?actorLabel ?genderLabel WHERE {
-                                SERVICE wikibase:label { 
-                                    bd:serviceParam wikibase:language "[AUTO_LANGUAGE]". }
-                                    {
-                                    SELECT DISTINCT ?item WHERE {
-                                        ?item p:P4086 ?statement0.
-                                        ?statement0 ps:P4086 "1".
-                                    }
-                                    LIMIT 100
-                                }
-                                OPTIONAL 
-                                { 
-                                    ?item wdt:P674 ?characters. 
-                                    ?characters wdt:P725 ?actor.
-                                    ?characters wdt:P21 ?gender.
-                                }
-                            }
-                            }
-                        } 
-                        GROUP BY ?charactersLabel ?genderLabel
+                        SELECT DISTINCT * WHERE {{
+                            SERVICE <https://query.wikidata.org/sparql> {{
+                                SELECT ?charactersLabel (GROUP_CONCAT(?actorLabel;SEPARATOR=", ") AS ?actorsLabel) ?genderLabel WHERE {{
+                                    {{
+                                    SELECT DISTINCT ?charactersLabel ?actorLabel ?genderLabel WHERE {{
+                                        SERVICE wikibase:label {{ 
+                                            bd:serviceParam wikibase:language "en". }}
+                                            {{
+                                            SELECT DISTINCT ?item WHERE {{
+                                                ?item p:P4086 ?statement0.
+                                                ?statement0 ps:P4086 "{id[1]}".
+                                            }}
+                                            LIMIT 100
+                                        }}
+                                        OPTIONAL 
+                                        {{ 
+                                            ?item wdt:P674 ?characters. 
+                                            ?characters wdt:P725 ?actor.
+                                            ?characters wdt:P21 ?gender.
+                                        }}
+                                    }}
+                                    }}
+                                }}GROUP BY ?charactersLabel ?genderLabel
+                            }}
+                        }}
                         """)
             sparql.setQuery(query)
             res_character = sparql.queryAndConvert()
